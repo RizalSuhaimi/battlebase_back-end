@@ -5,11 +5,11 @@ const cors = require('cors');
 
 const PORT = process.env.PORT || 4001;
 
-app.use((req, res, next) => {
-    console.log(`This appears before the request is passed to the bodyParser.json() method. req.body lookes like:`)
-    console.log(req.body)
-    next()
-});
+// app.use((req, res, next) => {
+//     console.log(`This appears before the request is passed to the bodyParser.json() method. req.body lookes like:`)
+//     console.log(req.body)
+//     next()
+// });
 
 app.use(bodyParser.json());
 
