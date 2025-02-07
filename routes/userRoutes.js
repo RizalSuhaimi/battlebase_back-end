@@ -29,7 +29,7 @@ usersRouter.post("/", async (req, res, next) => {
 
         // Need to make use some kind of algorithm for these two and check that the id has not yet existed in the database
         const addressId = "a0000000000000000000"
-        const userId = "u0000000000000000000"
+        const userId = "u000000000000000"
 
         const userInsertQuery = `
             INSERT INTO address (
@@ -40,6 +40,7 @@ usersRouter.post("/", async (req, res, next) => {
                 city,
                 postcode,
                 region_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
         `
 
         client.query(

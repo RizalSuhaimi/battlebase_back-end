@@ -1,0 +1,34 @@
+CREATE SEQUENCE user_id_seq START 1;
+
+CREATE OR REPLACE FUNCTION to_base62(num BIGINT) RETURNS VARCHAR AS $$
+DECLARE
+    alphabet TEXT := '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    result TEXT := '';
+    base INT := 62;
+BEGIN
+    IF num = 0 THEN
+        RETURN '0';
+    END IF;
+
+    WHILE num > 0 LOOP
+        result := substr(alphabet, (num % base) + 1, 1) || result;
+        num := num / base;
+    END LOOP;
+
+    -- Pad the result to 16 characters
+    RETURN lpad(result, 16, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION generate_user_id() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.id := to_base62(nextval('user_id_seq'));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_user_id
+BEFORE INSERT ON users
+FOR EACH ROW
+WHEN (NEW.id IS NULL) -- Only set the ID if it's not provided
+EXECUTE FUNCTION generate_user_id();
