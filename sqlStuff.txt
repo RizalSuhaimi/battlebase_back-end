@@ -15,8 +15,8 @@ BEGIN
         num := num / base;
     END LOOP;
 
-    -- Pad the result to 16 characters
-    RETURN lpad(result, 16, '0');
+    -- Pad the result to 10 characters
+    RETURN lpad(result, 10, '0');
 END;
 $$ LANGUAGE plpgsql;
 
@@ -32,3 +32,7 @@ BEFORE INSERT ON users
 FOR EACH ROW
 WHEN (NEW.id IS NULL) -- Only set the ID if it's not provided
 EXECUTE FUNCTION generate_user_id();
+
+
+####
+When the above code works, work on password encryption, and checking if the ID already exists

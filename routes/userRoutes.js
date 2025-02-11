@@ -1,7 +1,7 @@
 const express = require('express');
 const usersRouter = express.Router();
 
-import pool from "../config/db";
+const pool = require("../config/db");
 
 usersRouter.post("/", async (req, res, next) => {
     const {
@@ -27,31 +27,133 @@ usersRouter.post("/", async (req, res, next) => {
     try {
         await client.query('BEGIN');
 
-        // Need to make use some kind of algorithm for these two and check that the id has not yet existed in the database
-        const addressId = "a0000000000000000000"
-        const userId = "u000000000000000"
+        // Get the region id. New regions are added manually by the admin as the operations scale up
+        const regionIdQuery = `
+            SELECT id
+            FROM regions
+            WHERE
+                zone = $1
+                AND country = $2`;
+
+        const regionIdResult = await client.query(
+            regionIdQuery,
+            [zone, "country"]
+        );
+
+        let regionId = regionIdResult.rows[0]?.id;
+
+        if (regionIdResult.rows.length === 0) {
+            throw new Error("Service not available for this region")
+        } else {
+            regionId = regionIdResult.rows[0].id;
+        }
+        
+        // Check if address already exists
+        // If not, create address
+        // Get the address id
+        const addressIdQuery = `
+            SELECT id
+            FROM regions
+            WHERE
+                unit_number = $1,
+                AND floor_number = $2,
+                AND street = $3,
+                AND city = $4,
+                AND postcode = $5,
+                AND region_id = $6`;
+
+        const addressIdResult = await client.query(
+            addressIdQuery,
+            [
+                unitNumber,
+                floorNumber,
+                street,
+                city,
+                postcode,
+                regionId
+            ]
+        )
 
         const userInsertQuery = `
             INSERT INTO address (
-                id,
                 unit_number,
                 floor_number,
                 street,
                 city,
                 postcode,
                 region_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6)
         `
 
-        client.query(
+        // Commit the transaction
+        await client.query('COMMIT');
 
-        )
+        // Send success response
+        res.status(201).json({ message: "User created successfully", regionId });
+        
     } catch (err) {
+        // Rollback the transaction in case of an error
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while creating the user"}`});
 
     } finally {
-
+        client.release(); // Release the client back to the pool
     }
     
 });
 
 module.exports = usersRouter;
+
+/*
+const Pool = require('pg').Pool;
+const pool = new Pool({ /* connection details / });
+
+usersRouter.post("/", async (req, res, next) => {
+    const {
+        name,
+        email,
+        password,
+        phone,
+        postcode,
+        zone,
+        country
+    } = req.body;
+
+    const client = await pool.connect();  // Get a client from the pool
+
+    try {
+        // Begin the transaction
+        await client.query('BEGIN');
+
+        // Insert into the users table and return the user_id
+        const userInsertQuery = `
+            INSERT INTO users (name, email, password, phone)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id;`;
+        const userResult = await client.query(userInsertQuery, [name, email, password, phone]);
+        const userId = userResult.rows[0].id;  // Get the generated user id
+
+        // Insert into the address table, using the userId
+        const addressInsertQuery = `
+            INSERT INTO address (user_id, postcode, zone, country)
+            VALUES ($1, $2, $3, $4);`;
+        await client.query(addressInsertQuery, [userId, postcode, zone, country]);
+
+        // Commit the transaction
+        await client.query('COMMIT');
+
+        // Send success response
+        res.status(201).json({ message: "User created successfully", userId });
+
+    } catch (error) {
+        // Rollback the transaction in case of an error
+        await client.query('ROLLBACK');
+        console.error(error);
+        res.status(500).json({ message: "An error occurred while creating the user" });
+
+    } finally {
+        client.release();  // Release the client back to the pool
+    }
+});
+*/

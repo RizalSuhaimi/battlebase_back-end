@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const Pool = require('pg').Pool;
-export const pool = new Pool({
+const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
     database: process.env.DB_DATABASE,
@@ -12,3 +12,5 @@ export const pool = new Pool({
 const addToDatabase = (modelType, instance) => {
 
 }
+
+module.exports = pool;
