@@ -37,10 +37,10 @@ usersRouter.post("/", async (req, res, next) => {
 
         const regionIdResult = await client.query(
             regionIdQuery,
-            [zone, "country"]
+            [zone, country]
         );
 
-        let regionId = regionIdResult.rows[0]?.id;
+        let regionId;
 
         if (regionIdResult.rows.length === 0) {
             throw new Error("Service not available for this region")
@@ -53,13 +53,13 @@ usersRouter.post("/", async (req, res, next) => {
         // Get the address id
         const addressIdQuery = `
             SELECT id
-            FROM regions
+            FROM address
             WHERE
-                unit_number = $1,
-                AND floor_number = $2,
-                AND street = $3,
-                AND city = $4,
-                AND postcode = $5,
+                unit_number = $1
+                AND floor_number = $2
+                AND street = $3
+                AND city = $4
+                AND postcode = $5
                 AND region_id = $6`;
 
         const addressIdResult = await client.query(
@@ -74,22 +74,58 @@ usersRouter.post("/", async (req, res, next) => {
             ]
         )
 
+        let addressId;
+
+        if (addressIdResult.rows.length === 0) {
+            const addressInsertQuery = `
+                INSERT INTO address (
+                    unit_number,
+                    floor_number,
+                    street,
+                    city,
+                    postcode,
+                    region_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            `
+
+            const addressInsertResult = await client.query(
+                addressInsertQuery,
+                [
+                    unitNumber,
+                    floorNumber,
+                    street,
+                    city,
+                    postcode,
+                    regionId
+                ]
+            )
+
+            addressId = addressInsertResult.rows[0].id;
+        } else {
+            addressId = addressIdResult.rows[0].id;
+        }
+
         const userInsertQuery = `
-            INSERT INTO address (
-                unit_number,
-                floor_number,
-                street,
-                city,
-                postcode,
-                region_id)
-            VALUES ($1, $2, $3, $4, $5, $6)
-        `
+            INSERT INTO users (name, email, phone, password, address_id)
+            VALUES ($1, $2, $3, $4, $5);
+        `;
+        const userInsertResult = await client.query(
+            userInsertQuery, 
+            [
+                name, 
+                email,
+                phone,
+                password,
+                addressId
+            ]
+        );
+        const userId = userInsertResult.rows[0].id;
 
         // Commit the transaction
         await client.query('COMMIT');
 
         // Send success response
-        res.status(201).json({ message: "User created successfully", regionId });
+        res.status(201).json({ message: "User created successfully", userId, addressId, regionId });
         
     } catch (err) {
         // Rollback the transaction in case of an error
