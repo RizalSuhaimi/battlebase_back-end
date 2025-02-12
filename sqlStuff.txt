@@ -1,5 +1,6 @@
 CREATE SEQUENCE user_id_seq START 1;
 
+
 CREATE OR REPLACE FUNCTION to_base62(num BIGINT) RETURNS VARCHAR AS $$
 DECLARE
     alphabet TEXT := '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -11,7 +12,7 @@ BEGIN
     END IF;
 
     WHILE num > 0 LOOP
-        result := substr(alphabet, (num % base) + 1, 1) || result;
+        result := substr(alphabet, ((num % base) + 1)::INT, 1) || result;
         num := num / base;
     END LOOP;
 
@@ -20,12 +21,74 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
+CREATE OR REPLACE FUNCTION from_base62(base62_str VARCHAR) RETURNS BIGINT AS $$
+DECLARE
+    alphabet TEXT := '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    result BIGINT := 0;
+    base INT := 62;
+    char TEXT;
+    idx IT;
+BEGIN
+    FOR idx IN 1..length(base62_str) LOOP
+        char := substr(base62_str, idx, 1);
+    
+        -- Find the position of the current character in the alphabet (0-indexed)
+        result := result * base + (position(char IN alphabet) - 1);
+    END LOOP;
+
+    RETURN RESULT
+END;
+$$ LANGUAGE plpgsql;
+
+
 CREATE OR REPLACE FUNCTION generate_user_id() RETURNS TRIGGER AS $$
 BEGIN
     NEW.id := to_base62(nextval('user_id_seq'));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION generate_user_id() RETURNS TRIGGER AS $$
+DECLARE
+    base10_ids BIGINT[] := ARRAY[]::BIGINT[];
+    max_id BIGINT;
+    smallest_id BIGINT := 1;
+    current_id BIGINT;
+    rec RECORD;
+BEGIN
+    -- Fetch all existing ids, convert them to base-10, and store in the array
+    FOR rec IN (SELECT id FROM users) LOOP
+        base10_ids := array_append(base10_ids, from_base62(rec.id));
+    END LOOP;
+
+    -- Find the largest id in base-10 from the array
+    SELECT MAX(base10_id) INTO max_id
+    FROM unnest(base10_ids) AS base10_id;
+    
+    -- Check for the smallest available base-10 number by iterating
+    FOR current_id IN 1..max_id LOOP
+        IF current_id != ALL(base10_ids) THEN
+            smallest_id := current_id;
+            EXIT;
+        ELSIF current_id = max_id THEN
+            smallest_id = max_id;
+        END IF;
+    END LOOP;
+
+    -- If the largest ID equals the number of rows, use the next sequence value
+    IF smallest_id >= max_id THEN
+        NEW.id := to_base62(max_id + 1);
+    ELSE
+        -- Otherwise, use the smallest available number
+        NEW.id := to_base62(smallest_id);
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 
 CREATE TRIGGER set_user_id
 BEFORE INSERT ON users

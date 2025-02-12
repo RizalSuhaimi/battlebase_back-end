@@ -86,6 +86,7 @@ usersRouter.post("/", async (req, res, next) => {
                     postcode,
                     region_id)
                 VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id;
             `
 
             const addressInsertResult = await client.query(
@@ -107,7 +108,8 @@ usersRouter.post("/", async (req, res, next) => {
 
         const userInsertQuery = `
             INSERT INTO users (name, email, phone, password, address_id)
-            VALUES ($1, $2, $3, $4, $5);
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id;
         `;
         const userInsertResult = await client.query(
             userInsertQuery, 
