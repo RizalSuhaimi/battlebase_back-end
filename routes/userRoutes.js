@@ -3,10 +3,29 @@ const usersRouter = express.Router();
 
 const pool = require("../config/db");
 
+usersRouter.get("/", (req, res, next) => {
+    const getUsersQuery = `
+         SELECT name, email, phone
+         FROM users
+         ORDER BY name ASC;
+    `
+
+    try {
+        pool.query(getUsersQuery, (err, results) => {
+            if (err) {
+                throw err;
+            }
+            res.status(200).json(results.rows);
+        })
+    } catch(err) {
+        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while getting users"}`});
+    }
+    
+});
+
 usersRouter.post("/", async (req, res, next) => {
     const {
         name,
-        username,
         email,
         password,
         phone,
@@ -19,7 +38,6 @@ usersRouter.post("/", async (req, res, next) => {
         country
     } = req.body
 
-    // Need to query the regions table for the region_id using the zone and coutnry values
     // Need to encrypt the password
 
     const client = await pool.connect();
@@ -142,56 +160,3 @@ usersRouter.post("/", async (req, res, next) => {
 });
 
 module.exports = usersRouter;
-
-/*
-const Pool = require('pg').Pool;
-const pool = new Pool({ /* connection details / });
-
-usersRouter.post("/", async (req, res, next) => {
-    const {
-        name,
-        email,
-        password,
-        phone,
-        postcode,
-        zone,
-        country
-    } = req.body;
-
-    const client = await pool.connect();  // Get a client from the pool
-
-    try {
-        // Begin the transaction
-        await client.query('BEGIN');
-
-        // Insert into the users table and return the user_id
-        const userInsertQuery = `
-            INSERT INTO users (name, email, password, phone)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id;`;
-        const userResult = await client.query(userInsertQuery, [name, email, password, phone]);
-        const userId = userResult.rows[0].id;  // Get the generated user id
-
-        // Insert into the address table, using the userId
-        const addressInsertQuery = `
-            INSERT INTO address (user_id, postcode, zone, country)
-            VALUES ($1, $2, $3, $4);`;
-        await client.query(addressInsertQuery, [userId, postcode, zone, country]);
-
-        // Commit the transaction
-        await client.query('COMMIT');
-
-        // Send success response
-        res.status(201).json({ message: "User created successfully", userId });
-
-    } catch (error) {
-        // Rollback the transaction in case of an error
-        await client.query('ROLLBACK');
-        console.error(error);
-        res.status(500).json({ message: "An error occurred while creating the user" });
-
-    } finally {
-        client.release();  // Release the client back to the pool
-    }
-});
-*/
