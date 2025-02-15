@@ -5,7 +5,7 @@ const pool = require("../config/db");
 
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
-         SELECT name, email, phone
+         SELECT name, username, email, phone
          FROM users
          ORDER BY name ASC;
     `
@@ -26,6 +26,7 @@ usersRouter.get("/", (req, res, next) => {
 usersRouter.post("/", async (req, res, next) => {
     const {
         name,
+        username,
         email,
         password,
         phone,
@@ -125,14 +126,15 @@ usersRouter.post("/", async (req, res, next) => {
         }
 
         const userInsertQuery = `
-            INSERT INTO users (name, email, phone, password, address_id)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO users (name, username, email, phone, password, address_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id;
         `;
         const userInsertResult = await client.query(
             userInsertQuery, 
             [
-                name, 
+                name,
+                username,
                 email,
                 phone,
                 password,
