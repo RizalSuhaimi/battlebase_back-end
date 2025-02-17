@@ -1,7 +1,18 @@
 const express = require('express');
 const usersRouter = express.Router();
-
+const bcrypt = require("bcrypt");
 const pool = require("../config/db");
+
+const passwordHash = async (password, saltRounds) => {
+    try {
+        const salt = await bcrypt.genSalt(saltRounds);
+        const hash = await bcrypt.hash(password, salt);
+        return hash;
+    } catch (err) {
+        return err;
+    }
+    return null;
+}
 
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
@@ -31,7 +42,7 @@ usersRouter.post("/", async (req, res, next) => {
         password,
         phone,
         unitNumber,
-        floorNumber,
+        floorNumber=null,
         street,
         city,
         postcode,
@@ -125,6 +136,9 @@ usersRouter.post("/", async (req, res, next) => {
             addressId = addressIdResult.rows[0].id;
         }
 
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+
         const userInsertQuery = `
             INSERT INTO users (name, username, email, phone, password, address_id)
             VALUES ($1, $2, $3, $4, $5, $6)
@@ -137,7 +151,7 @@ usersRouter.post("/", async (req, res, next) => {
                 username,
                 email,
                 phone,
-                password,
+                hash,
                 addressId
             ]
         );
