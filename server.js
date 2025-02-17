@@ -42,7 +42,7 @@ app.use(bodyParser.json());
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
-        cookie: { maxAge: 1000 * 60, secure: false, sameSite: "none" },
+        cookie: { maxAge: 1000 * 60 * 60 * 24, secure: false, sameSite: "none" },
         resave: false,
         saveUninitialized: false,
         store
@@ -131,7 +131,7 @@ app.get('/login', (req, res) => {
 });
 
 app.post("/login",
-    passport.authenticate("local", { failureRedirect: "/login" }),
+    passport.authenticate("local", { failureRedirect: "/login", failureMessage: true }),
     (req, res) => {
         res.redirect("/profile");
     }
