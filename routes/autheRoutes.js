@@ -9,7 +9,7 @@ autheRouter.get('/login', (req, res) => {
 autheRouter.post("/login",
     passport.authenticate("local", { failureRedirect: "/authe/login" }),
     (req, res) => {
-        res.redirect("/profile");
+        res.redirect(`/users/${req.user.id}`);
     }
 )
 

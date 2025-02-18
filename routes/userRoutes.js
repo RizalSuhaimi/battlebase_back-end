@@ -2,6 +2,7 @@ const express = require('express');
 const usersRouter = express.Router();
 const bcrypt = require("bcrypt");
 const pool = require("../config/db");
+const isAuthenticated = require("../utils/middlewareAuthe");
 
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
@@ -165,19 +166,37 @@ usersRouter.post("/", async (req, res, next) => {
 });
 
 // DRY validate userId
-usersRouter.param("userId", (req, res, next, id) => {
+usersRouter.param("userId", async (req, res, next, id) => {
+    const userLoginQuery = `
+        SELECT id, name, username, email, phone, seller_id
+        FROM users
+        WHERE id = $1`;
+    
+    try {
+        const results = await pool.query(userLoginQuery, [id]);
+
+        const user = results.rows[0];
+
+        if (user) {
+            req.user = user;
+            next()
+        }
+
+    } catch(err) {
+        res.status(404).json({ errorMessage: `${err.message}` });
+    }
     
 })
 
-usersRouter.get("/:userId", (req, res, next) => {
-
+usersRouter.get("/:userId", isAuthenticated, (req, res, next) => {
+    res.status(200).send(req.user);
 })
 
-usersRouter.put("/:userId", (req, res, next) => {
+usersRouter.put("/:userId", isAuthenticated, (req, res, next) => {
     
 })
 
-usersRouter.delete("/:userId", (req, res, next) => {
+usersRouter.delete("/:userId", isAuthenticated, (req, res, next) => {
     
 })
 

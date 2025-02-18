@@ -57,25 +57,24 @@ passport.use(
             const userLoginQuery = `
                 SELECT id, email, password
                 FROM users
-                WHERE
-                    email = $1`;
+                WHERE email = $1`;
             
             try {
                 const results = await pool.query(userLoginQuery, [email]);
                     
-                    if (results.rows.length === 0) {
-                        return done(null, false, { message: "Invalid email" });
-                    }
+                if (results.rows.length === 0) {
+                    return done(null, false, { message: "Invalid email" });
+                }
 
-                    const user = results.rows[0];
+                const user = results.rows[0];
 
-                    const matchedPassword = await bcrypt.compare(password, user.password)
+                const matchedPassword = await bcrypt.compare(password, user.password)
 
-                    if (!matchedPassword) {
-                        return done(null, false, { message: "Invalid password" });
-                    }
-                    
-                    return done(null, user);
+                if (!matchedPassword) {
+                    return done(null, false, { message: "Invalid password" });
+                }
+                
+                return done(null, user);
 
             } catch(err) {
                 return done(err);
@@ -117,12 +116,6 @@ app.use("/authe", autheRouter);
 
 app.get('/', (req, res) => {
     res.status(200).json({ info: 'Node.js, Express, and Postgress API'})
-});
-
-
-
-app.get('/profile', isAuthenticated, (req, res) => {
-    res.status(200).json({ email: req.user.email })
 });
 
 app.get('/protected', isAuthenticated, (req, res) => {
