@@ -1,0 +1,803 @@
+openapi: 3.0.3
+info:
+  title: BuyBuy
+  version: 1.0.0
+  description: An API for an e-commerce web application
+servers:
+  - url: http://localhost:4001
+    variables: {}
+    description: Local development server
+paths:
+  /users:
+    summary: Access all users
+    description: This path will grant access to all the users from the postgres database
+    get:
+      summary: Gets the users' data
+      description: Gets the users' data from the postgres database
+      operationId: get_users
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                users:
+                  value: |-
+                    {"users": [
+                      {"id": "00000000000000000000", "name": "Rachel Chan", 
+                      "username": "rachelc1", "email": "rachelc@email.com", 
+                      "phone": "+60110000000", 
+                      "region_id": 0, "seller_id": "0000000000000000000a"}, 
+                      {"id": "00000000000000000001", "name": "Michael Chan", 
+                      "username": "michaelc1", "email": "michaelc@email.com", "phone": "+60110000001", 
+                      "region_id": 1, "seller_id": "0000000000000000000b"}, 
+                      {"id": "00000000000000000002", "name": "Amber Chan", 
+                      "username": "amberc1", "email": "amberc@email.com", "phone": "+60110000002", 
+                      "region_id": 2, "seller_id": "0000000000000000000c"}
+                    ]}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Users
+    post:
+      summary: Register a new user
+      description: This operation adds a new user to the postgres database
+      operationId: post_user
+      requestBody:
+        description: A new user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          content:
+            application/json:
+              examples:
+                newUser:
+                  value: |-
+                    {"newUser": 
+                      {"id": "00000000000000000003", "name": "Darren Chan", 
+                      "email": "darrenc@email.com", "phone": "+60110000003", 
+                      "region_id": 3, "seller_id": null}
+                    }
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Users
+  /users/{userId}:
+    summary: Access a specific user
+    description: >-
+      This path will grant access to the user with a matching ID from the 
+      postgres database
+    get:
+      summary: Gets a specific user's data
+      description: >-
+        This operation will get the user's data with a matching ID from the 
+        postgres database
+      operationId: get_user
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                users:
+                  value: |-
+                    {"id": "00000000000000000002", "name": "Amber Chan", 
+                      "email": "amberc@email.com", "phone": "+60110000002", 
+                      "region_id": 2, "seller_id": "00000000000000000002"}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Users
+    put:
+      summary: Updates a specific user's data
+      description: >-
+        This operation will update the user's data with a matching ID from the 
+        postgres database
+      operationId: put_user
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        description: An updated user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                users:
+                  value: |-
+                    {"id": "00000000000000000002", "name": "Amber Chan", 
+                      "email": "amberc@email.com", "phone": "+60120000002", 
+                      "region_id": 2, "seller_id": null}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Users
+    delete:
+      summary: Deletes a specific user's data
+      description: >-
+        This operation will delete the user's data with a matching ID from the 
+        postgres database
+      operationId: delete_user
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '204':
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Users
+  /users/{userId}/orders/buyer:
+    summary: Access user's buying orders
+    description: This path grants access to the user's buying orders from the postgres database
+    get:
+      summary: Get the user's past buying orders
+      description: >-
+        This operation will get the past buying orders of the user with a matching ID
+        from the database
+      operationId: get_orders_buy
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                orders:
+                  value: |-
+                    [
+                      {"orderId": "10000000000000000000",
+                      "sellerName": "Rachel Chan",
+                      "products": [
+                        {"productId": "0000000000000000000B", 
+                        "productName": "Beyblade Storm Pegasus",
+                        "price": 20.00, "Quantity": 2},
+                        {"productId": "0000000000000000000C",
+                        "productName": "Beyblade Fang Leone",
+                        "price": 20.00, "Quantity": 1}
+                      ]},
+                      {"orderId": "20000000000000000000",
+                      "sellerName": "Rachel Chan",
+                      "products": [
+                        {"productId": "0000000000000000000B", 
+                        "productName": "Beyblade Diablo Nemesis",
+                        "price": 20.00, "Quantity": 2},
+                        {"productId": "0000000000000000000C",
+                        "productName": "Beyblade Fang Leone",
+                        "price": 20.00, "Quantity": 1}
+                      ]}
+                    ]
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Orders
+  /users/{userId}/orders/seller:
+    summary: Access user's selling orders
+    description: This path grants access to the user's selling orders from the postgres database
+    get:
+      summary: Get the user's past selling orders
+      description: >-
+        This operation will get the past selling orders of the user with a matching ID
+        from the database
+      operationId: get_orders_sell
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                orders:
+                  value: |-
+                    [
+                      {"orderId": "10000000000000000000",
+                      "sellerName": "Rachel Chan",
+                      "products": [
+                        {"productId": "0000000000000000000B", 
+                        "productName": "Beyblade Storm Pegasus",
+                        "price": 20.00, "Quantity": 2},
+                        {"productId": "0000000000000000000C",
+                        "productName": "Beyblade Fang Leone",
+                        "price": 20.00, "Quantity": 1}
+                      ]},
+                      {"orderId": "20000000000000000000",
+                      "sellerName": "Rachel Chan",
+                      "products": [
+                        {"productId": "0000000000000000000B", 
+                        "productName": "Beyblade Diablo Nemesis",
+                        "price": 20.00, "Quantity": 2},
+                        {"productId": "0000000000000000000C",
+                        "productName": "Beyblade Fang Leone",
+                        "price": 20.00, "Quantity": 1}
+                      ]}
+                    ]
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Orders
+  /users/{userId}/orders/{orderId}:
+    summary: Access a specific order
+    description: This path grants access to the user's specific order from the postgres database
+    delete:
+      summary: Delete order
+      description: >-
+        This operation allows the user to delete an order
+        from the database
+      operationId: delete_order
+      parameters:
+        - $ref: '#/components/parameters/userId'
+        - $ref: '#/components/parameters/orderId'
+      responses:
+        '204':
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Orders
+  /users/{userId}/cart:
+    summary: Access user's cart
+    description: This path grants access to the user's cart from the postgres database
+    get:
+      summary: Get the user's cart
+      description: >-
+        This operation will get cart of the user with a matching ID from the
+        database
+      operationId: get_cart
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                cart:
+                  value: |-
+                    [
+                      {"productId": "000000000000000a", "productName": "Beyblade Storm Pegasus",
+                      "price": 20.00, "Quantity": 2, "sellerName": "Rachel Chan"},
+                      {"productId": "000000000000000b","productName": "Beyblade Fang Leone",
+                      "price": 20.00, "Quantity": 1, "sellerName": "Rachel Chan"}
+                    ]
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Cart
+    put:
+      summary: Update the user's cart
+      description: >-
+        This operation will update cart of the user with items of matching ID
+        from the database
+      operationId: put_cart
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      requestBody:
+        description: An updated cart object
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  productId:
+                    type: string
+                    example: '0000000000012345'
+                  productname:
+                    type: string
+                    example: Beyblade Mercury Anubis
+                  price:
+                    type: number
+                    example: 20
+                  quantity:
+                    type: integer
+                    example: 2
+                required:
+                  - productId
+                  - productName
+                  - price
+                  - quantity
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                updatedCart:
+                  value: |-
+                    [
+                      {"productId": "000000000000000a", "productName": "Beyblade Storm Pegasus",
+                      "price": 20.00, "Quantity": 5, "sellerName": "Rachel Chan"},
+                      {"productId": "000000000000000b","productName": "Beyblade Fang Leone",
+                      "price": 20.00, "Quantity": 3, "sellerName": "Rachel Chan"}
+                    ]
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Cart
+    delete:
+      summary: Delete the user's cart
+      description: >-
+        This operation will delete cart of the user with items of matching ID
+        from the database
+      operationId: delete_cart
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '204':
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Cart
+  /checkout/{userId}:
+    summary: Check out cart items
+    description: >- 
+      This path is for users to check out their cart items and finish placing their order
+    get:
+      summary: Place the order and make the payment
+      description: Place the order and make the payment. Update the user's corresponding data on orders and cart. Update the seller(s)'s corresponding data on orders and products
+      operationId: checkout
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                order:
+                  value: |-
+                    [
+                      {"productId": "000000000000000a", "productName": "Beyblade Storm Pegasus",
+                      "price": 20.00, "Quantity": 2, "sellerName": "Rachel Chan"},
+                      {"productId": "000000000000000b","productName": "Beyblade Fang Leone",
+                      "price": 20.00, "Quantity": 1, "sellerName": "Rachel Chan"}
+                    ]
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Checkout
+  /products:
+    summary: Access all products
+    description: This path will grant access to all the products from the postgres database
+    get:
+      summary: Get the products' data
+      description: Get the products' data from the postgres database
+      operationId: get_products
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                products:
+                  value: |-
+                    {"products": [
+                      {"id": "00000000000000000000", "name": "Beyblade Storm Pegasus", 
+                      "stock": 10, "price": 20.00, "seller_id": "0000000000000000000a"}, 
+                      {"id": "00000000000000000001", "name": "Beyblade Earth Eagle", 
+                      "stock": 9, "price": 20.00, "seller_id": "0000000000000000000b"}, 
+                      {"id": "00000000000000000002", "name": "Beyblade Ray Unicorno", 
+                      "stock": 8, "price": 20.00, "seller_id": "0000000000000000000c"}
+                    ]}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Products
+    post:
+      summary: Add a new product
+      description: This operation adds a new product to the postgres database
+      operationId: post_product
+      requestBody:
+        description: A new product object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '201':
+          content:
+            application/json:
+              examples:
+                newProduct:
+                  value: |-
+                    {"newProduct": 
+                      {"id": "00000000000000000003", "name": "Beyblade Gravity Perseus", 
+                      "stock": 7, "price": 20.00, "seller_id": "0000000000000000000c"}
+                    }
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Products
+  /products/{productId}:
+    summary: Access the specific product
+    description: >-
+      This path will grant access to the product with a matching ID from the
+      postgres database
+    get:
+      summary: Gets a specific product's data
+      description: >-
+        This operation will get the product's data with a matching ID from the 
+        postgres database
+      operationId: get_product
+      parameters:
+        - $ref: '#/components/parameters/productId'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                product:
+                  value: >-
+                    {"id": "00000000000000000003", "name": "Beyblade Gravity
+                    Perseus", 
+                      "stock": 7, "price": 20.00, "seller_id": "0000000000000000000c"}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Products
+    put:
+      summary: Updates a specific product's data
+      description: >-
+        This operation will update the product's data with a matching ID from
+        the  postgres database
+      operationId: put_product
+      parameters:
+        - $ref: '#/components/parameters/productId'
+      requestBody:
+        description: A new product object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                product:
+                  value: |-
+                    {"id": "00000000000000000000", "name": "Big Bang Pegasus", 
+                      "stock": 7, "price": 20.00, "seller_id": "0000000000000000000a"}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Products
+    delete:
+      summary: Deletes a specific product's data
+      description: >-
+        This operation will delete the product's data with a matching ID from
+        the  postgres database
+      operationId: delete_product
+      parameters:
+        - $ref: '#/components/parameters/productId'
+      responses:
+        '204':
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Products
+  /register:
+    summary: User registers a new account
+    description: user will pass credentials to this path to login
+    post:
+      summary: User registers a new account
+      description: >-
+        This operation will create a new account by sending the user's newly
+        created credentials to the Postgres database
+      operationId: post_register
+      requestBody:
+        description: A new user account object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/createdUser'
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+        '500':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Failed to create new user account
+          description: Server-side error
+      tags:
+        - Register
+  /authe/login:
+    summary: User logs in to their account
+    description: User will pass credentials to this path to log into their account
+    post:
+      summary: User logs in to their account
+      description: >-
+        This operation will check the user credentials with the database and
+        logs the user into their account
+      operationId: post_login
+      requestBody:
+        description: User credentials
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                loginSuccess:
+                  value: You have logged in
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Authentication
+  /authe/logout:
+    summary: User logs out of their account
+    description: User will log out of the app(session)
+    get:
+      summary: User logs out of their account
+      description: This operation lets the user log out of their account
+      operationId: get_logout
+      responses:
+        '201':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                loginSuccess:
+                  value: You have logged in
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Authentication
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              username:
+                type: string
+              email:
+                type: string
+              password:
+                type: string
+              phone:
+                type: string
+        address:
+          type: array
+          items:
+            type: object
+            properties:
+              unitNumber:
+                type: string
+              floorNumber:
+                type: integer
+              street:
+                type: string
+              city:
+                type: string
+              postcode:
+                type: string
+              zone:
+                type: string
+              country:
+                type: string
+    createdUser:
+      type: object
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        unitNumber:
+          type: string
+        floorNumber:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        postcode:
+          type: string
+        zone:
+          type: string
+        country:
+          type: string
+    Seller:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        country:
+          type: string
+        ops_zone_country:
+          type: object
+          properties:
+            zone:
+              type: string
+            country:
+              type: string
+    Product:
+      type: object
+      properties:
+        name:
+          type: string
+        stock:
+          type: integer
+        price:
+          type: number
+        seller_id:
+          type: string
+  parameters:
+    userId:
+      name: userId
+      in: path
+      description: The id of the user
+      required: true
+      schema:
+        type: string
+    orderId:
+      name: orderId
+      in: path
+      description: The id of the order
+      required: true
+      schema:
+        type: string
+    sellerId:
+      name: sellerId
+      in: path
+      description: The id of the seller
+      required: true
+      schema:
+        type: string
+    productId:
+      name: productId
+      in: path
+      description: The id of the product
+      required: true
+      schema:
+        type: string
