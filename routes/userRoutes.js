@@ -3,17 +3,6 @@ const usersRouter = express.Router();
 const bcrypt = require("bcrypt");
 const pool = require("../config/db");
 
-const passwordHash = async (password, saltRounds) => {
-    try {
-        const salt = await bcrypt.genSalt(saltRounds);
-        const hash = await bcrypt.hash(password, salt);
-        return hash;
-    } catch (err) {
-        return err;
-    }
-    return null;
-}
-
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
          SELECT name, username, email, phone
@@ -174,5 +163,22 @@ usersRouter.post("/", async (req, res, next) => {
     }
     
 });
+
+// DRY validate userId
+usersRouter.param("userId", (req, res, next, id) => {
+    
+})
+
+usersRouter.get("/:userId", (req, res, next) => {
+
+})
+
+usersRouter.put("/:userId", (req, res, next) => {
+    
+})
+
+usersRouter.delete("/:userId", (req, res, next) => {
+    
+})
 
 module.exports = usersRouter;

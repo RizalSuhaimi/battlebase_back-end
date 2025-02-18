@@ -22,18 +22,8 @@ const store = isProduction
     })
     : new session.MemoryStore();
 
-const comparePasswords = async (password, hash) => {
-    try {
-        const matchFound = await bcrypt.compare(password, hash);
-        return matchFound;
-    } catch(err) {
-        console.log(err);
-    };
-    return false;
-}
-
 app.use(cors({
-    origin: true, // Allow requests from any origin during development
+    origin: true, // Allow requests from any origin during development. Change this to the front-end url during production
     credentials: true // This is required to send cookies in cross-origin requests
 }));
 
@@ -42,7 +32,7 @@ app.use(bodyParser.json());
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
-        cookie: { maxAge: 1000 * 60 * 60 * 24, secure: false, sameSite: "none" },
+        cookie: { maxAge: 1000 * 60 * 60 * 24, secure: false, sameSite: "none" }, // Change secure value to true during production
         resave: false,
         saveUninitialized: false,
         store
@@ -122,20 +112,14 @@ passport.deserializeUser(async (id, done) => {
 const usersRouter = require('./routes/userRoutes');
 app.use("/users", usersRouter);
 
+const autheRouter = require('./routes/autheRoutes');
+app.use("/authe", autheRouter);
+
 app.get('/', (req, res) => {
     res.status(200).json({ info: 'Node.js, Express, and Postgress API'})
 });
 
-app.get('/login', (req, res) => {
-    res.status(200).json({message: "Enter login credentials"})
-});
 
-app.post("/login",
-    passport.authenticate("local", { failureRedirect: "/login", failureMessage: true }),
-    (req, res) => {
-        res.redirect("/profile");
-    }
-)
 
 app.get('/profile', isAuthenticated, (req, res) => {
     res.status(200).json({ email: req.user.email })
