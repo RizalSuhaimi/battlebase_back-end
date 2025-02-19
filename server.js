@@ -8,6 +8,7 @@ const LocalStrategy = require("passport-local").Strategy;
 const pool = require("./config/db");
 const PgSession = require('connect-pg-simple')(session);
 const bcrypt = require("bcrypt");
+const isAuthenticated = require("./utils/middlewareAuthe");
 
 require('dotenv').config();
 
@@ -41,14 +42,6 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-function isAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-        return next();
-    } else {
-        return res.status(401).json({ message: "You must be logged in to access this resource"})
-    }
-}
 
 passport.use(
     new LocalStrategy(

@@ -122,7 +122,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/updateUser'
       responses:
         '200':
           content:
@@ -684,6 +684,35 @@ components:
     User:
       type: object
       properties:
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        seller:
+          type: boolean
+        unitNumber:
+          type: string
+        floorNumber:
+          type: integer
+        street:
+          type: string
+        city:
+          type: string
+        postcode:
+          type: string
+        zone:
+          type: string
+        country:
+          type: string
+    updateUser:
+      type: object
+      properties:
         user:
           type: array
           items:
@@ -699,6 +728,8 @@ components:
                 type: string
               phone:
                 type: string
+              seller:
+                type: boolean
         address:
           type: array
           items:
