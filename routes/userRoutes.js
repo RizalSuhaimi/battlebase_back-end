@@ -4,6 +4,8 @@ const bcrypt = require("bcrypt");
 const pool = require("../config/db");
 const isAuthenticated = require("../utils/middlewareAuthe");
 
+import { createUpdateTableQuery } from '../utils/updateTableQuery';
+
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
          SELECT name, username, email, phone
@@ -283,57 +285,60 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
             postcode,
             region_id
         };
+        const varAddressTable = "address";
+        const updateAddressQueryObj = createUpdateTableQuery(addressColsObj, varAddressTable, req.user.address_id);
+        const updateAddressQuery = updateAddressQueryObj.tableUpdateQuery;
+        const updateAddressVals = updateAddressQueryObj.updateValsArr;
 
-        for (const col of Object.keys(addressColsObj)) {
-            if (!addressColsObj[col]) {
-                delete addressColsObj[col];
-            }
-        }
+        const updateAddressResults = await client.query(
+            updateAddressQuery, 
+            updateAddressVals
+        );
         
-        const usersColsObj = {
-            name, 
-            username, 
-            email, 
-            hash, 
-            phone, 
-            seller,
-            address_id
-        };
+        // const usersColsObj = {
+        //     name, 
+        //     username, 
+        //     email, 
+        //     hash, 
+        //     phone, 
+        //     seller,
+        //     address_id
+        // };
     
-        for (const col of Object.keys(usersColsObj)) {
-            if (!usersColsObj[col]) {
-                delete usersColsObj[col];
-            }
-        }
+        // for (const col of Object.keys(usersColsObj)) {
+        //     if (!usersColsObj[col]) {
+        //         delete usersColsObj[col];
+        //     }
+        // }
     
-        // Split the object into two arrays: 1 for keys, 1 for values. This is needed to build the query string
-        const updateUsersColsArr = Object.keys(usersColsObj);
-        const updateUsersValsArr = Object.values(usersColsObj);
+        // // Split the object into two arrays: 1 for keys, 1 for values. This is needed to build the query string
+        // const updateUsersColsArr = Object.keys(usersColsObj);
+        // const updateUsersValsArr = Object.values(usersColsObj);
 
-        if (updateUsersColsArr.length !== 0) {
-            let columnCount = 0;
-            let updateColsStr = "";
+        // if (updateUsersColsArr.length !== 0) {
+        //     let columnCount = 0;
+        //     let updateColsStr = "";
 
-            for (const col of updateUsersColsArr) {
-                columnCount += 1;
-                updateColsStr += `${col} = $${columnCount.toString()}${(columnCount === updateUsersColsArr.length) ? "" : `,
-                    `}`
-            }
+        //     for (const col of updateUsersColsArr) {
+        //         columnCount += 1;
+        //         updateColsStr += `${col} = $${columnCount.toString()}${(columnCount === updateUsersColsArr.length) ? "" : `,
+        //             `}`
+        //     }
 
-            const usersUpdateQuery = `
-                UPDATE users
-                SET ${updateColsStr}
-                WHERE id = $${(columnCount + 1).toString()};
-            `;
+        //     const usersUpdateQuery = `
+        //         UPDATE users
+        //         SET ${updateColsStr}
+        //         WHERE id = $${(columnCount + 1).toString()};
+        //     `;
 
-            // add the user's id to the end of the array of values
-            updateUsersValsArr.push(req.user.id)
+        //     // add the user's id to the end of the array of values
+        //     updateUsersValsArr.push(req.user.id)
 
-            await client.query(
-                usersUpdateQuery, 
-                updateUsersValsArr
-            );
-        }
+        //     await client.query(
+        //         usersUpdateQuery, 
+        //         updateUsersValsArr
+        //     );
+        // }
         
 
         await client.query('COMMIT');
