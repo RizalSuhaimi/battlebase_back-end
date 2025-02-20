@@ -9,7 +9,7 @@ const createInsertQuery = require('../utils/createInsertQuery');
 
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
-         SELECT name, username, email, phone
+         SELECT id, name, username, email, phone, seller, address_id
          FROM users
          ORDER BY name ASC;
     `
@@ -35,77 +35,15 @@ usersRouter.post("/", async (req, res, next) => {
         password,
         phone,
         seller=false,
-        unit_number,
-        floor_number=null,
-        building_name=null,
-        street,
-        city,
-        postcode,
-        zone,
-        country
+        address_id=null
     } = req.body
 
-    const client = await pool.connect();
+    let client
 
     try {
+        client = await pool.connect();
+
         await client.query('BEGIN');
-
-        // Get the region id. New regions are added manually by the admin as the operations scale up
-        const regionsCols = {zone, country};
-        const getRegion_idQueryObj = createSelectIdQuery("regions", regionsCols);
-        const region_idQuery = getRegion_idQueryObj.row_idQuery;
-        const region_idMatchVals = getRegion_idQueryObj.matchValsArr;
-
-        const region_idResult = await client.query(
-            region_idQuery,
-            region_idMatchVals
-        );
-
-        let region_id;
-
-        if (region_idResult.rows.length === 0) {
-            throw new Error("Service not available for this region")
-        } else {
-            region_id = region_idResult.rows[0].id;
-        }
-        
-        // Check if address already exists
-        // If not, create address
-        // Get the address id
-        const addressCols = {
-            unit_number,
-            floor_number,
-            building_name,
-            street,
-            city,
-            postcode,
-            region_id
-        }
-        const getAddress_idQueryObj = createSelectIdQuery("address", addressCols);
-        const address_idQuery = getAddress_idQueryObj.row_idQuery;
-        const address_idMatchVals = getAddress_idQueryObj.matchValsArr;
-
-        const address_idResult = await client.query(
-            address_idQuery,
-            address_idMatchVals
-        )
-
-        let address_id;
-
-        if (address_idResult.rows.length === 0) {
-            const addressInsertQueryObj = createInsertQuery("address", addressCols);
-            const addressInsertQuery = addressInsertQueryObj.insertQuery;
-            const addressInsertVals = addressInsertQueryObj.valsArr;
-
-            const addressInsertResult = await client.query(
-                addressInsertQuery,
-                addressInsertVals
-            )
-
-            address_id = addressInsertResult.rows[0].id;
-        } else {
-            address_id = address_idResult.rows[0].id;
-        }
 
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
@@ -132,7 +70,6 @@ usersRouter.post("/", async (req, res, next) => {
         // Commit the transaction
         await client.query('COMMIT');
 
-        // Send success response
         res.status(201).json({ message: "User created successfully", userId });
         
     } catch (err) {
@@ -184,147 +121,55 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
         password,
         phone,
         seller,
-        unit_number,
-        floor_number,
-        street,
-        city,
-        postcode,
-        zone,
-        country
+        address_id
     } = req.body
 
-    const client = await pool.connect();
+    const user_id = req.user.id;
+
+    let client
 
     try {
+        client = await pool.connect();
+
         await client.query('BEGIN');
 
-        // Updating the region means searching for the region in the regions table and if it does not exist, return an error. Only system admin can create new regions
-        let region_id;
+        // In a real production, you need to check whether the user knows her current password before changing to a new one
+        // OR check a flag indicating whether the user forgot her password
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
 
-        const regionsColsObj = {
-            zone,
-            country
-        };
-
-        for (const col of Object.keys(regionsColsObj)) {
-            if (!regionsColsObj[col]) {
-                delete regionsColsObj[col];
-            }
+        const usersCols = {
+            name,
+            username,
+            email,
+            password: hash,
+            phone,
+            seller,
+            address_id
         }
+        const userUpdateQueryObj = createUpdateTableQuery("users", usersCols, user_id);
+        const userUpdateQuery = userUpdateQueryObj.tableUpdateQuery;
+        const userUpdateVals = userUpdateQueryObj.updateValsArr;
 
-        const updateRegionsColsArr = Object.keys(regionsColsObj);
-        const updateRegionsValsArr = Object.values(regionsColsObj);
-
-        // Get the region id. New regions are added manually by the admin as the operations scale up
-        if (updateRegionsColsArr.length > 0) {
-            let columnCount = 0;
-            let whereColsStr = "";
-
-            for (const col of updateRegionsColsArr) {
-                columnCount += 1;
-                whereColsStr += `${col} = $${columnCount.toString()}${(columnCount === updateRegionsColsArr.length) ? "" : `
-                    AND `}`
-            }
-
-            const region_idQuery = `
-                SELECT id
-                FROM regions
-                WHERE ${whereColsStr}`;
-            
-            const region_idResult = await client.query(
-                region_idQuery, 
-                updateRegionsValsArr
-            );
-
-            if (region_idResult.rows.length === 0) {
-                throw new Error("Service not available for this region")
-            } else {
-                region_id = region_idResult.rows[0].id;
-            };
-
-        } 
-        
-        // If the region is not being updated, leave region_id as undefined
-    
-        // Updating the address is NOT updating a row. It's searching for the updated address in the table and if it doesn't exist, create a new address and get the address_id
-        // this helps save storage space
-        const addressColsObj = {
-            unit_number,
-            floor_number,
-            street,
-            city,
-            postcode,
-            region_id
-        };
-        const varAddressTable = "address";
-        const updateAddressQueryObj = createUpdateTableQuery(varAddressTable, addressColsObj, req.user.address_id);
-        const updateAddressQuery = updateAddressQueryObj.tableUpdateQuery;
-        const updateAddressVals = updateAddressQueryObj.updateValsArr;
-
-        const updateAddressResults = await client.query(
-            updateAddressQuery, 
-            updateAddressVals
+        const userUpdateResults = await client.query(
+            userUpdateQuery,
+            userUpdateVals
         );
 
-        const address_id = updateAddressResults.rows[0].id
-        
-        // const usersColsObj = {
-        //     name, 
-        //     username, 
-        //     email, 
-        //     hash, 
-        //     phone, 
-        //     seller,
-        //     address_id
-        // };
-    
-        // for (const col of Object.keys(usersColsObj)) {
-        //     if (!usersColsObj[col]) {
-        //         delete usersColsObj[col];
-        //     }
-        // }
-    
-        // // Split the object into two arrays: 1 for keys, 1 for values. This is needed to build the query string
-        // const updateUsersColsArr = Object.keys(usersColsObj);
-        // const updateUsersValsArr = Object.values(usersColsObj);
-
-        // if (updateUsersColsArr.length !== 0) {
-        //     let columnCount = 0;
-        //     let updateColsStr = "";
-
-        //     for (const col of updateUsersColsArr) {
-        //         columnCount += 1;
-        //         updateColsStr += `${col} = $${columnCount.toString()}${(columnCount === updateUsersColsArr.length) ? "" : `,
-        //             `}`
-        //     }
-
-        //     const usersUpdateQuery = `
-        //         UPDATE users
-        //         SET ${updateColsStr}
-        //         WHERE id = $${(columnCount + 1).toString()};
-        //     `;
-
-        //     // add the user's id to the end of the array of values
-        //     updateUsersValsArr.push(req.user.id)
-
-        //     await client.query(
-        //         usersUpdateQuery, 
-        //         updateUsersValsArr
-        //     );
-        // }
-        
+        const updatedCols = userUpdateResults.rows[0]
 
         await client.query('COMMIT');
 
         res.status(200).json({ 
-            message: "Data was successfully updated", 
-            userId: req.user.id
+            message: "User data was successfully updated", 
+            userId: user_id,
+            updatedColumns: updatedCols
         });
 
     } catch(err) {
         await client.query('ROLLBACK');
         console.error(err);
-        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while updating the data"}`});
+        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while updating the user data"}`});
 
     } finally {
         client.release();

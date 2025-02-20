@@ -76,12 +76,12 @@ passport.use(
 )
 
 passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, user.id); // Store the user ID in the session
 });
 
 passport.deserializeUser(async (id, done) => {
     const getUsersQuery = `
-         SELECT id, email
+         SELECT id
          FROM users
          WHERE id = $1;
     `
@@ -107,8 +107,8 @@ app.use("/users", usersRouter);
 const autheRouter = require('./routes/autheRoutes');
 app.use("/authe", autheRouter);
 
-const addressRouter = require('./routes/addressRoutes');
-app.use("/address", addressRouter);
+const addressesRouter = require('./routes/addressesRoutes');
+app.use("/addresses", addressesRouter);
 
 app.get('/', (req, res) => {
     res.status(200).json({ info: 'Node.js, Express, and Postgress API'})

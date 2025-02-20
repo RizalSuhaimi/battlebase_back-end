@@ -23,14 +23,13 @@ const createUpdateTableQuery = (table, colsObj, id) => {
         }
     
         const tableUpdateQuery = `
-            UPDATE $${(columnCount + 1).toString()}
+            UPDATE ${table}
             SET ${updateColsStr}
-            WHERE id = $${(columnCount + 2).toString()}
+            WHERE id = $${(columnCount + 1).toString()}
             RETURNING id;
         `;
     
-        // add the table name and row's id so that the array can be used in the .query argument
-        updateValsArr.push(table);
+        // add the table row's id so that the array can be used in the .query argument
         updateValsArr.push(id);
         
         return { tableUpdateQuery, updateValsArr }

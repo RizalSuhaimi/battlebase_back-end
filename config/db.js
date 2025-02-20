@@ -9,8 +9,4 @@ const pool = new Pool({
     port: process.env.DB_PORT
 });
 
-const addToDatabase = (modelType, instance) => {
-
-}
-
 module.exports = pool;

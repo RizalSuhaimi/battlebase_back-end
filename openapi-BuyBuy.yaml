@@ -196,11 +196,11 @@ paths:
       tags:
         - Addresses
     post:
-      summary: Register a new user
-      description: This operation adds a new user to the postgres database
+      summary: Register a new address
+      description: This operation adds a new address to the postgres database
       operationId: post_address
       requestBody:
-        description: A new user object
+        description: A new address object
         content:
           application/json:
             schema:
@@ -213,9 +213,8 @@ paths:
                 newUser:
                   value: |-
                     {
-                      "id": "00000000000000000003", "name": "Darren Chan", 
-                      "email": "darrenc@email.com", "phone": "+60110000003", 
-                      "region_id": 3, "seller_id": null
+                      "message": "New address created", 
+                      "addressId": "0000000001"
                     }
           description: Success
         '400':
@@ -227,6 +226,166 @@ paths:
           description: Bad request
       tags:
         - Addresses
+  /addresses/{addressId}:
+    summary: Access all addresses
+    description: This path will grant access to all the addresses from the postgres database
+    get:
+      summary: Gets the specific address data
+      description: Gets the address data with the matching addressId from the postgres database
+      operationId: get_address
+      parameters:
+        - $ref: '#/components/parameters/addressId'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                users:
+                  value: |-
+                    {"id": "0000000001", "unit_number": "1", 
+                      "floor_number": "1", "building_name": "Imazium", 
+                      "street": "Baker Street", "city": "Metropolis",
+                      "region_id": 3, "zone": "Johor", "country": "Malaysia"}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Addresses
+    put:
+      summary: Updates the specific address data
+      description: Updates the address data with the matching addressId from the postgres database
+      operationId: put_address
+      parameters:
+        - $ref: '#/components/parameters/addressId'
+      requestBody:
+        description: A new address object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Address'
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                address:
+                  value: |-
+                    {"id": "0000000001", "unit_number": "1", 
+                      "floor_number": "1", "building_name": "Imazium", 
+                      "street": "Baker Street", "city": "Metropolis",
+                      "region_id": 3, "zone": "Johor", "country": "Malaysia"}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Addresses
+    delete:
+      summary: Deletes the specific address data
+      description: Deletes the address data with the matching addressId from the postgres database
+      operationId: delete_address
+      parameters:
+        - $ref: '#/components/parameters/addressId'
+      responses:
+        '204':
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Addresses
+  /orders:
+    summary: Access all orders
+    description: This path grants access to the all orders from the postgres database
+    post:
+      summary: Create a new order
+      description: >-
+        This operation will create a new order in the database using the id of the 
+        buyer and seller
+      operationId: post_order
+      requestBody:
+        description: A new user object
+        content:
+          application/json: 
+            schema:
+              type: object
+              properties:
+                sellerId:
+                  type: string
+                buyerId:
+                  type: string
+                dateTime:
+                  type: string
+                products:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId:
+                        type: string
+                      productName:
+                        type: string
+                      price:
+                        type: number
+                      quantity:
+                        type: integer
+                recipientAddress:
+                  type: object
+                  properties:
+                    unitNumber:
+                      type: string
+                    floorNumber:
+                      type: integer
+                    street:
+                      type: string
+                    city:
+                      type: string
+                    postcode:
+                      type: string
+                    zone:
+                      type: string
+                    country:
+                      type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                orders:
+                  value: |-
+                      {"orderId": "10000000000000000000",
+                      "sellerName": "Rachel Chan",
+                      "products": [
+                        {"productId": "0000000000000000000B", 
+                        "productName": "Beyblade Storm Pegasus",
+                        "price": 20.00, "Quantity": 2},
+                        {"productId": "0000000000000000000C",
+                        "productName": "Beyblade Fang Leone",
+                        "price": 20.00, "Quantity": 1}
+                      ]}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Orders
   /users/{userId}/orders/buyer:
     summary: Access user's buying orders
     description: This path grants access to the user's buying orders from the postgres database
@@ -277,6 +436,7 @@ paths:
           description: Bad request
       tags:
         - Orders
+
   /users/{userId}/orders/seller:
     summary: Access user's selling orders
     description: This path grants access to the user's selling orders from the postgres database
@@ -759,6 +919,13 @@ components:
       name: userId
       in: path
       description: The id of the user
+      required: true
+      schema:
+        type: string
+    addressId:
+      name: addressId
+      in: path
+      description: The id of the address
       required: true
       schema:
         type: string
