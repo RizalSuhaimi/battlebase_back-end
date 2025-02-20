@@ -23,16 +23,13 @@ paths:
                 users:
                   value: |-
                     {"users": [
-                      {"id": "00000000000000000000", "name": "Rachel Chan", 
+                      {"id": "0000000001", "name": "Rachel Chan", 
                       "username": "rachelc1", "email": "rachelc@email.com", 
-                      "phone": "+60110000000", 
-                      "region_id": 0, "seller_id": "0000000000000000000a"}, 
-                      {"id": "00000000000000000001", "name": "Michael Chan", 
-                      "username": "michaelc1", "email": "michaelc@email.com", "phone": "+60110000001", 
-                      "region_id": 1, "seller_id": "0000000000000000000b"}, 
-                      {"id": "00000000000000000002", "name": "Amber Chan", 
-                      "username": "amberc1", "email": "amberc@email.com", "phone": "+60110000002", 
-                      "region_id": 2, "seller_id": "0000000000000000000c"}
+                      "phone": "+60110000000", "address_id": "0000000001", "seller": true}, 
+                      {"id": "0000000002", "name": "Michael Chan", 
+                      "username": "michaelc1", "email": "michaelc@email.com", "phone": "+60110000001", "address_id": "0000000002", "seller": false}, 
+                      {"id": "0000000003", "name": "Amber Chan", 
+                      "username": "amberc1", "email": "amberc@email.com", "phone": "+60110000002", "address_id": null, "seller": true}
                     ]}
           description: Success
         '400':
@@ -61,11 +58,8 @@ paths:
               examples:
                 newUser:
                   value: |-
-                    {"newUser": 
-                      {"id": "00000000000000000003", "name": "Darren Chan", 
-                      "email": "darrenc@email.com", "phone": "+60110000003", 
-                      "region_id": 3, "seller_id": null}
-                    }
+                    {"message": "User created successfully",
+                      "userId": "0000000003"}
           description: Success
         '400':
           content:
@@ -96,9 +90,9 @@ paths:
               examples:
                 users:
                   value: |-
-                    {"id": "00000000000000000002", "name": "Amber Chan", 
+                    {"id": "0000000002", "name": "Amber Chan", 
                       "email": "amberc@email.com", "phone": "+60110000002", 
-                      "region_id": 2, "seller_id": "00000000000000000002"}
+                      "address_id": "0000000001", "seller": false}
           description: Success
         '400':
           content:
@@ -122,7 +116,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/updateUser'
+              $ref: '#/components/schemas/User'
       responses:
         '200':
           content:
@@ -130,9 +124,9 @@ paths:
               examples:
                 users:
                   value: |-
-                    {"id": "00000000000000000002", "name": "Amber Chan", 
+                    {"id": "0000000002", "name": "Amber Chan", 
                       "email": "amberc@email.com", "phone": "+60120000002", 
-                      "region_id": 2, "seller_id": null}
+                      "address_id": "0000000002", "seller": true}
           description: Success
         '400':
           content:
@@ -163,6 +157,76 @@ paths:
           description: Bad request
       tags:
         - Users
+  /addresses:
+    summary: Access all addresses
+    description: This path will grant access to all the addresses from the postgres database
+    get:
+      summary: Gets the addresses data
+      description: Gets the addresses data from the postgres database
+      operationId: get_addresses
+      responses:
+        '200':
+          content:
+            application/json:
+              examples:
+                users:
+                  value: |-
+                    {"addresses": [
+                      {"id": "0000000001", "unit_number": "1", 
+                      "floor_number": "1", "building_name": "Imazium", 
+                      "street": "Baker Street", "city": "Metropolis",
+                      "region_id": 3, "zone": "Johor", "country": "Malaysia"}, 
+                      {"id": "0000000002", "unit_number": "3", 
+                      "floor_number": "1", "building_name": "Imazium", 
+                      "street": "Baker Street", "city": "Metropolis",
+                      "region_id": 3, "zone": "Johor", "country": "Malaysia"}, 
+                      {"id": "0000000003", "unit_number": "3", 
+                      "floor_number": "1", "building_name": "Imazium", 
+                      "street": "Baker Street", "city": "Metropolis",
+                      "region_id": 3, "zone": "Johor", "country": "Malaysia"}
+                    ]}
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Addresses
+    post:
+      summary: Register a new user
+      description: This operation adds a new user to the postgres database
+      operationId: post_address
+      requestBody:
+        description: A new user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Address'
+      responses:
+        '201':
+          content:
+            application/json:
+              examples:
+                newUser:
+                  value: |-
+                    {
+                      "id": "00000000000000000003", "name": "Darren Chan", 
+                      "email": "darrenc@email.com", "phone": "+60110000003", 
+                      "region_id": 3, "seller_id": null
+                    }
+          description: Success
+        '400':
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                error:
+                  value: Bad request
+          description: Bad request
+      tags:
+        - Addresses
   /users/{userId}/orders/buyer:
     summary: Access user's buying orders
     description: This path grants access to the user's buying orders from the postgres database
@@ -580,44 +644,6 @@ paths:
           description: Bad request
       tags:
         - Products
-  /register:
-    summary: User registers a new account
-    description: user will pass credentials to this path to login
-    post:
-      summary: User registers a new account
-      description: >-
-        This operation will create a new account by sending the user's newly
-        created credentials to the Postgres database
-      operationId: post_register
-      requestBody:
-        description: A new user account object
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/createdUser'
-          description: Success
-        '400':
-          content:
-            text/plain; charset=utf-8:
-              examples:
-                error:
-                  value: Bad request
-          description: Bad request
-        '500':
-          content:
-            text/plain; charset=utf-8:
-              examples:
-                error:
-                  value: Failed to create new user account
-          description: Server-side error
-      tags:
-        - Register
   /authe/login:
     summary: User logs in to their account
     description: User will pass credentials to this path to log into their account
@@ -696,102 +722,27 @@ components:
           type: string
         seller:
           type: boolean
-        unitNumber:
+        address_id:
           type: string
-        floorNumber:
-          type: integer
-        street:
-          type: string
-        city:
-          type: string
-        postcode:
-          type: string
-        zone:
-          type: string
-        country:
-          type: string
-    updateUser:
-      type: object
-      properties:
-        user:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              username:
-                type: string
-              email:
-                type: string
-              password:
-                type: string
-              phone:
-                type: string
-              seller:
-                type: boolean
-        address:
-          type: array
-          items:
-            type: object
-            properties:
-              unitNumber:
-                type: string
-              floorNumber:
-                type: integer
-              street:
-                type: string
-              city:
-                type: string
-              postcode:
-                type: string
-              zone:
-                type: string
-              country:
-                type: string
-    createdUser:
-      type: object
-      properties:
-        name:
-          type: string
-        username:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        unitNumber:
-          type: string
-        floorNumber:
-          type: string
-        street:
-          type: string
-        city:
-          type: string
-        postcode:
-          type: string
-        zone:
-          type: string
-        country:
-          type: string
-    Seller:
-      type: object
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        country:
-          type: string
-        ops_zone_country:
-          type: object
-          properties:
-            zone:
-              type: string
-            country:
-              type: string
+    Address:
+      type: array
+      items:
+        type: object
+        properties:
+          unitNumber:
+            type: string
+          floorNumber:
+            type: integer
+          street:
+            type: string
+          city:
+            type: string
+          postcode:
+            type: string
+          zone:
+            type: string
+          country:
+            type: string
     Product:
       type: object
       properties:

@@ -1,4 +1,4 @@
-export const createUpdateTableQuery = (colsObj, table, id) => {
+const createUpdateTableQuery = (table, colsObj, id) => {
     // returns 2 things
     // 1. Full query
     // 2. Array of input values
@@ -34,7 +34,10 @@ export const createUpdateTableQuery = (colsObj, table, id) => {
         updateValsArr.push(id);
         
         return { tableUpdateQuery, updateValsArr }
+
     } else {
         return null
     }
 }
+
+module.exports = createUpdateTableQuery;

@@ -3,8 +3,9 @@ const usersRouter = express.Router();
 const bcrypt = require("bcrypt");
 const pool = require("../config/db");
 const isAuthenticated = require("../utils/middlewareAuthe");
-
-import { createUpdateTableQuery } from '../utils/updateTableQuery';
+const createUpdateTableQuery = require('../utils/createUpdateTableQuery');
+const createSelectIdQuery = require('../utils/createSelectIdQuery');
+const createInsertQuery = require('../utils/createInsertQuery');
 
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
@@ -36,7 +37,7 @@ usersRouter.post("/", async (req, res, next) => {
         seller=false,
         unit_number,
         floor_number=null,
-        buidling_name=null,
+        building_name=null,
         street,
         city,
         postcode,
@@ -50,16 +51,14 @@ usersRouter.post("/", async (req, res, next) => {
         await client.query('BEGIN');
 
         // Get the region id. New regions are added manually by the admin as the operations scale up
-        const region_idQuery = `
-            SELECT id
-            FROM regions
-            WHERE
-                zone = $1
-                AND country = $2`;
+        const regionsCols = {zone, country};
+        const getRegion_idQueryObj = createSelectIdQuery("regions", regionsCols);
+        const region_idQuery = getRegion_idQueryObj.row_idQuery;
+        const region_idMatchVals = getRegion_idQueryObj.matchValsArr;
 
         const region_idResult = await client.query(
             region_idQuery,
-            [zone, country]
+            region_idMatchVals
         );
 
         let region_id;
@@ -73,58 +72,34 @@ usersRouter.post("/", async (req, res, next) => {
         // Check if address already exists
         // If not, create address
         // Get the address id
-        const address_idQuery = `
-            SELECT id
-            FROM address
-            WHERE
-                unit_number = $1
-                AND floor_number = $2
-                AND buidling_name = $3
-                AND street = $4
-                AND city = $5
-                AND postcode = $6
-                AND region_id = $7`;
+        const addressCols = {
+            unit_number,
+            floor_number,
+            building_name,
+            street,
+            city,
+            postcode,
+            region_id
+        }
+        const getAddress_idQueryObj = createSelectIdQuery("address", addressCols);
+        const address_idQuery = getAddress_idQueryObj.row_idQuery;
+        const address_idMatchVals = getAddress_idQueryObj.matchValsArr;
 
         const address_idResult = await client.query(
             address_idQuery,
-            [
-                unit_number,
-                floor_number,
-                buidling_name,
-                street,
-                city,
-                postcode,
-                region_id
-            ]
+            address_idMatchVals
         )
 
         let address_id;
 
         if (address_idResult.rows.length === 0) {
-            const addressInsertQuery = `
-                INSERT INTO address (
-                    unit_number,
-                    floor_number,
-                    buidling_name,
-                    street,
-                    city,
-                    postcode,
-                    region_id)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id;
-            `
+            const addressInsertQueryObj = createInsertQuery("address", addressCols);
+            const addressInsertQuery = addressInsertQueryObj.insertQuery;
+            const addressInsertVals = addressInsertQueryObj.valsArr;
 
             const addressInsertResult = await client.query(
                 addressInsertQuery,
-                [
-                    unit_number,
-                    floor_number,
-                    buidling_name,
-                    street,
-                    city,
-                    postcode,
-                    region_id
-                ]
+                addressInsertVals
             )
 
             address_id = addressInsertResult.rows[0].id;
@@ -135,29 +110,22 @@ usersRouter.post("/", async (req, res, next) => {
         const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
 
-        const userInsertQuery = `
-            INSERT INTO users (
-                name, 
-                username, 
-                email, 
-                password, 
-                phone, 
-                seller, 
-                address_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id;
-        `;
+        const usersCols = {
+            name,
+            username,
+            email,
+            password: hash,
+            phone,
+            seller,
+            address_id
+        };
+        const userInsertQueryObj = createInsertQuery("users", usersCols);
+        const userInsertQuery = userInsertQueryObj.insertQuery;
+        const userInsertVals = userInsertQueryObj.valsArr;
+
         const userInsertResult = await client.query(
             userInsertQuery, 
-            [
-                name,
-                username,
-                email,
-                hash,
-                phone,
-                seller,
-                address_id
-            ]
+            userInsertVals
         );
         const userId = userInsertResult.rows[0].id;
 
@@ -165,7 +133,7 @@ usersRouter.post("/", async (req, res, next) => {
         await client.query('COMMIT');
 
         // Send success response
-        res.status(201).json({ message: "User created successfully", userId, address_id, region_id });
+        res.status(201).json({ message: "User created successfully", userId });
         
     } catch (err) {
         // Rollback the transaction in case of an error
@@ -230,6 +198,7 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
     try {
         await client.query('BEGIN');
 
+        // Updating the region means searching for the region in the regions table and if it does not exist, return an error. Only system admin can create new regions
         let region_id;
 
         const regionsColsObj = {
@@ -277,6 +246,8 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
         
         // If the region is not being updated, leave region_id as undefined
     
+        // Updating the address is NOT updating a row. It's searching for the updated address in the table and if it doesn't exist, create a new address and get the address_id
+        // this helps save storage space
         const addressColsObj = {
             unit_number,
             floor_number,
@@ -286,7 +257,7 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
             region_id
         };
         const varAddressTable = "address";
-        const updateAddressQueryObj = createUpdateTableQuery(addressColsObj, varAddressTable, req.user.address_id);
+        const updateAddressQueryObj = createUpdateTableQuery(varAddressTable, addressColsObj, req.user.address_id);
         const updateAddressQuery = updateAddressQueryObj.tableUpdateQuery;
         const updateAddressVals = updateAddressQueryObj.updateValsArr;
 
@@ -294,6 +265,8 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
             updateAddressQuery, 
             updateAddressVals
         );
+
+        const address_id = updateAddressResults.rows[0].id
         
         // const usersColsObj = {
         //     name, 

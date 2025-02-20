@@ -107,6 +107,9 @@ app.use("/users", usersRouter);
 const autheRouter = require('./routes/autheRoutes');
 app.use("/authe", autheRouter);
 
+const addressRouter = require('./routes/addressRoutes');
+app.use("/address", addressRouter);
+
 app.get('/', (req, res) => {
     res.status(200).json({ info: 'Node.js, Express, and Postgress API'})
 });
