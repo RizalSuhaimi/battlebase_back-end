@@ -15,10 +15,13 @@ const createUpdateTableQuery = (table, colsObj, id) => {
     if (updateColsArr.length > 0) {
         let columnCount = 0;
         let updateColsStr = "";
+        let returningColsStr = "";
     
         for (const col of updateColsArr) {
             columnCount += 1;
             updateColsStr += `${col} = $${columnCount.toString()}${(columnCount === updateColsArr.length) ? "" : `,
+                `}`
+            returningColsStr += `${col}${(columnCount === updateColsArr.length) ? "" : `,
                 `}`
         }
     
@@ -26,7 +29,7 @@ const createUpdateTableQuery = (table, colsObj, id) => {
             UPDATE ${table}
             SET ${updateColsStr}
             WHERE id = $${(columnCount + 1).toString()}
-            RETURNING id;
+            RETURNING ${returningColsStr};
         `;
     
         // add the table row's id so that the array can be used in the .query argument
