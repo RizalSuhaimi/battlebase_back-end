@@ -89,6 +89,11 @@ usersRouter.param("userId", async (req, res, next, id) => {
     const userLoginQuery = `
         SELECT 
             id,
+            name, 
+            username, 
+            email, 
+            phone, 
+            seller,
             address_id
         FROM users
         WHERE id = $1`;
@@ -135,8 +140,12 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
 
         // In a real production, you need to check whether the user knows her current password before changing to a new one
         // OR check a flag indicating whether the user forgot her password
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(password, salt);
+        // Only fill up hash with the appropriate value if password is to be updated
+        let hash;
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            hash = await bcrypt.hash(password, salt);
+        }
 
         const usersCols = {
             name,
@@ -179,7 +188,35 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
 })
 
 usersRouter.delete("/:userId", isAuthenticated, (req, res, next) => {
-    
+    const deleteUserQuery = `
+         DELETE FROM users
+         WHERE id = $1;
+    `
+
+    try {
+        pool.query(deleteUserQuery, [req.user.id], (err, results) => {
+            if (err) {
+                throw err;
+            }
+
+            req.logout((err) => {
+                if (err) {
+                    return res.status(500).json({errorMessage: err.message});
+                }
+        
+                req.session.destroy((err) => {
+                    if (err) {
+                        return res.status(500).json({errorMessage: err.message});
+                    }
+        
+                    res.status(204).json({message: "User deleted and logged out successfully"});
+                });
+            });
+            
+        })
+    } catch(err) {
+        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while getting users"}`});
+    }
 })
 
 module.exports = usersRouter;

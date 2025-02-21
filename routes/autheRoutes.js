@@ -16,9 +16,11 @@ autheRouter.post("/login",
 autheRouter.get('/logout', (req, res) => {
     req.logout((err) => {
         if (err) {
-            return next(err);
+            return res.status(500).json({errorMessage: err.message});
         }
+
     });
+
     res.redirect("/");
 });
 

@@ -89,12 +89,12 @@ passport.deserializeUser(async (id, done) => {
     try {
         const results = await pool.query(getUsersQuery, [id]);
             
-            if (results.rows.length === 0) {
-                return done(new Error('User not found'));
-            }
-            
-            const user = results.rows[0];
-            done(null, user)
+        if (results.rows.length === 0) {
+            return done(new Error('User not found'));
+        }
+        
+        const user = results.rows[0];
+        done(null, user)
        
     } catch(err) {
         return done(err);
