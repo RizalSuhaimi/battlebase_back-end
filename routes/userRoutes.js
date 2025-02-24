@@ -86,7 +86,7 @@ usersRouter.post("/", async (req, res, next) => {
 
 // DRY validate userId
 usersRouter.param("userId", async (req, res, next, id) => {
-    const userLoginQuery = `
+    const userInfoQuery = `
         SELECT 
             id,
             name, 
@@ -99,7 +99,7 @@ usersRouter.param("userId", async (req, res, next, id) => {
         WHERE id = $1`;
     
     try {
-        const results = await pool.query(userLoginQuery, [id]);
+        const results = await pool.query(userInfoQuery, [id]);
 
         const user = results.rows[0];
 
@@ -171,7 +171,7 @@ usersRouter.put("/:userId", isAuthenticated, async (req, res, next) => {
 
         res.status(200).json({ 
             message: "User data was successfully updated", 
-            userId: user_id,
+            user_id,
             updatedColumns: updatedCols
         });
 
