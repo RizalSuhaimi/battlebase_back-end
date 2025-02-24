@@ -75,8 +75,7 @@ addressRouter.post("/", isAuthenticated, async (req, res, next) => {
             region_id = region_idResult.rows[0].id;
         }
 
-        // Check if address already exists. If not, create address
-        // Get the address id
+        // Check if address already exists by checking for the address ID. If not, create address
         const addressCols = {
             unit_number,
             floor_number,
@@ -86,7 +85,7 @@ addressRouter.post("/", isAuthenticated, async (req, res, next) => {
             postcode,
             region_id
         }
-        const getAddress_idQueryObj = createSelectIdQuery("address", addressCols);
+        const getAddress_idQueryObj = createSelectIdQuery("addresses", addressCols);
         const address_idQuery = getAddress_idQueryObj.row_idQuery;
         const address_idMatchVals = getAddress_idQueryObj.matchValsArr;
 
@@ -96,9 +95,10 @@ addressRouter.post("/", isAuthenticated, async (req, res, next) => {
         )
 
         let address_id;
+        let message = "";
 
         if (address_idResult.rows.length === 0) {
-            const addressInsertQueryObj = createInsertQuery("address", addressCols);
+            const addressInsertQueryObj = createInsertQuery("addresses", addressCols);
             const addressInsertQuery = addressInsertQueryObj.insertQuery;
             const addressInsertVals = addressInsertQueryObj.valsArr;
 
@@ -108,13 +108,16 @@ addressRouter.post("/", isAuthenticated, async (req, res, next) => {
             )
 
             address_id = addressInsertResult.rows[0].id;
+            message = "New address created succesfully";
+
         } else {
             address_id = address_idResult.rows[0].id;
+            message = "Address already exists. Retrieved said address' ID";
         }
 
         await client.query('COMMIT');
 
-        res.status(201).json({ message: "Address created successfully", address_id });
+        res.status(201).json({ message, address_id });
     
     } catch (err) {
         await client.query('ROLLBACK');

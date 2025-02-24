@@ -1,6 +1,6 @@
--- converts a base-10 number to a base-62 number
+-- converts a base-10 number to a base-62 number in a 15-digit string fomat
 
-CREATE OR REPLACE FUNCTION to_base62(num BIGINT) RETURNS VARCHAR AS $$
+CREATE OR REPLACE FUNCTION to_base62_15d(num BIGINT) RETURNS VARCHAR AS $$
 DECLARE
     alphabet TEXT := '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     result TEXT := '';
@@ -15,7 +15,7 @@ BEGIN
         num := num / base;
     END LOOP;
 
-    -- Pad the result to 10 characters
-    RETURN lpad(result, 10, '0');
+    -- Pad the result to 15 characters
+    RETURN lpad(result, 15, '0');
 END;
 $$ LANGUAGE plpgsql;

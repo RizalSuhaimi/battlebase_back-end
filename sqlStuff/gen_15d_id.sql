@@ -1,6 +1,6 @@
---- This function can be used for any table that used the 10-digit id columns by changing the function name and the table used in the for loop on line 12
+--- This function can be used for any table that used the 15-digit id columns by changing the function name and the table used in the for loop on line 12
 
-CREATE OR REPLACE FUNCTION generate_user_id() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION generate_order_id() RETURNS TRIGGER AS $$
 DECLARE
     base10_ids BIGINT[] := ARRAY[]::BIGINT[];
     max_id BIGINT;
@@ -9,7 +9,7 @@ DECLARE
     rec RECORD;
 BEGIN
     -- Fetch all existing ids, convert them to base-10, and store in the array
-    FOR rec IN (SELECT id FROM users) LOOP
+    FOR rec IN (SELECT id FROM orders) LOOP
         base10_ids := array_append(base10_ids, from_base62(rec.id));
     END LOOP;
 
@@ -29,10 +29,10 @@ BEGIN
 
     -- If the largest ID equals the number of rows, use the value after the biggest value that's currently in the table 
     IF smallest_id >= max_id THEN
-        NEW.id := to_base62_10d(max_id + 1);
+        NEW.id := to_base62_15d(max_id + 1);
     ELSE
         -- Otherwise, use the smallest available number
-        NEW.id := to_base62_10d(smallest_id);
+        NEW.id := to_base62_15d(smallest_id);
     END IF;
 
     RETURN NEW;
