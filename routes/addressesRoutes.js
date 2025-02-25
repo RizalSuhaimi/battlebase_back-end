@@ -191,7 +191,6 @@ addressRouter.put("/:addressId", isAuthenticated, async (req, res, next) => {
         // Check if the updated address already exists. If yes, don't update the table row, just return the id of the found address
         // If not, update the table row
 
-
         // Get the region id if zone or country are being updated. New regions are added manually by the admin as the operations scale up
         let region_id;
 
@@ -218,6 +217,8 @@ addressRouter.put("/:addressId", isAuthenticated, async (req, res, next) => {
         // 1 for updating the address row if the address does not yet exist
 
         // When checking for an existing address, we need to have all the table columns(keys) valued with either the updated value (if present) or the current value
+
+        let updateUserData = false; // This tells the client side whether the user data in users table needs to be updated with a new address_id
         const addressColsIdQuery = {
             unit_number: unit_number ? unit_number : req.address.unit_number,
             floor_number: floor_number ? floor_number : req.address.floor_number,
@@ -266,6 +267,7 @@ addressRouter.put("/:addressId", isAuthenticated, async (req, res, next) => {
         } else {
             address_id = address_idResult.rows[0].id;
             message = "Address already exists. Retrieved said address' ID";
+            updateUserData = true;
         }
 
         await client.query('COMMIT');
@@ -273,7 +275,8 @@ addressRouter.put("/:addressId", isAuthenticated, async (req, res, next) => {
         res.status(200).json({ 
             message, 
             address_id,
-            updatedColumns: updatedCols
+            updatedColumns: updatedCols,
+            updateUserData
         });
 
     } catch(err) {
