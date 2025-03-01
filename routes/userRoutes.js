@@ -215,7 +215,7 @@ usersRouter.delete("/:userId", isAuthenticated, (req, res, next) => {
             
         })
     } catch(err) {
-        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while getting users"}`});
+        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred when deleting user"}`});
     }
 })
 

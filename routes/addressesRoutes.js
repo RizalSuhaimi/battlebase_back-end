@@ -289,8 +289,36 @@ addressRouter.put("/:addressId", isAuthenticated, async (req, res, next) => {
     }
 });
 
-addressRouter.delete("/:addressId", isAuthenticated, (req, res, next) => {
+// Only developers are authorised to delete addresses from the database
+// In a real production, it might be better to extract a string of multiple address IDs from the url parameter to enable multiple deletes at a time
+addressRouter.delete("/", isAuthenticated, async(req, res, next) => {
+    const { addressIds } = req.body;
 
+    const deleteAddressQuery = `
+         DELETE FROM addresses
+         WHERE id = ANY($1::text[]);
+    `
+
+    let client
+
+    try {
+        client = await pool.connect();
+
+        await client.query('BEGIN');
+
+        await client.query(
+            deleteAddressQuery,
+            [addressIds]
+        );
+
+        await client.query('COMMIT');
+
+        res.status(204).json({message: "Address(es) deleted"});
+
+
+    } catch(err) {
+        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while deleting address(es)"}`});
+    }
 });
 
 module.exports = addressRouter;
