@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION generate_user_id() RETURNS TRIGGER AS $$
 DECLARE
     base10_ids BIGINT[] := ARRAY[]::BIGINT[];
     max_id BIGINT;
-    smallest_id BIGINT := 1;
+    smallest_available_id BIGINT := 1;
     current_id BIGINT;
     rec RECORD;
 BEGIN
@@ -20,20 +20,14 @@ BEGIN
     -- Check for the smallest available base-10 number by iterating
     FOR current_id IN 1..max_id LOOP
         IF current_id != ALL(base10_ids) THEN
-            smallest_id := current_id;
+            smallest_available_id = current_id;
             EXIT;
         ELSIF current_id = max_id THEN
-            smallest_id = max_id;
+            smallest_available_id = max_id + 1;
         END IF;
     END LOOP;
 
-    -- If the largest ID equals the number of rows, use the value after the biggest value that's currently in the table 
-    IF smallest_id >= max_id THEN
-        NEW.id := to_base62_10d(max_id + 1);
-    ELSE
-        -- Otherwise, use the smallest available number
-        NEW.id := to_base62_10d(smallest_id);
-    END IF;
+    NEW.id := to_base62_10d(smallest_available_id);
 
     RETURN NEW;
 END;
