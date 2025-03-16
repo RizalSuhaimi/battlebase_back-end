@@ -86,8 +86,7 @@ addressRouter.post("/", isAuthenticated, async (req, res, next) => {
             region_id
         }
         const getAddress_idQueryObj = createSelectIdQuery("addresses", addressCols);
-        const address_idQuery = getAddress_idQueryObj.row_idQuery;
-        const address_idMatchVals = getAddress_idQueryObj.matchValsArr;
+        const { row_idQuery: address_idQuery, matchValsArr: address_idMatchVals } = getAddress_idQueryObj;
 
         const address_idResult = await client.query(
             address_idQuery,
@@ -99,8 +98,7 @@ addressRouter.post("/", isAuthenticated, async (req, res, next) => {
 
         if (address_idResult.rows.length === 0) {
             const addressInsertQueryObj = createInsertQuery("addresses", addressCols);
-            const addressInsertQuery = addressInsertQueryObj.insertQuery;
-            const addressInsertVals = addressInsertQueryObj.valsArr;
+            const { insertQuery: addressInsertQuery, valsArr: addressInsertVals } = addressInsertQueryObj;
 
             const addressInsertResult = await client.query(
                 addressInsertQuery,

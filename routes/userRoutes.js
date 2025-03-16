@@ -9,7 +9,7 @@ const createInsertQuery = require('../utils/createInsertQuery');
 
 usersRouter.get("/", (req, res, next) => {
     const getUsersQuery = `
-         SELECT id, name, username, email, phone, seller, address_id
+         SELECT id, name, username, email, phone, is_seller, address_id
          FROM users
          ORDER BY name ASC;
     `
@@ -93,7 +93,7 @@ usersRouter.param("userId", async (req, res, next, id) => {
             username, 
             email, 
             phone, 
-            seller,
+            is_seller,
             address_id
         FROM users
         WHERE id = $1`;
