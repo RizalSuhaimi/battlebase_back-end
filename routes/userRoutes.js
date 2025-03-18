@@ -57,9 +57,7 @@ usersRouter.post("/", async (req, res, next) => {
             seller,
             address_id
         };
-        const userInsertQueryObj = createInsertQuery("users", usersCols);
-        const userInsertQuery = userInsertQueryObj.insertQuery;
-        const userInsertVals = userInsertQueryObj.valsArr;
+        const { insertQuery: userInsertQuery, valsArr: userInsertVals } = createInsertQuery("users", usersCols);
 
         const userInsertResult = await client.query(
             userInsertQuery, 

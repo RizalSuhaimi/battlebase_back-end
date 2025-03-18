@@ -97,8 +97,7 @@ addressRouter.post("/", isAuthenticated, async (req, res, next) => {
         let message = "";
 
         if (address_idResult.rows.length === 0) {
-            const addressInsertQueryObj = createInsertQuery("addresses", addressCols);
-            const { insertQuery: addressInsertQuery, valsArr: addressInsertVals } = addressInsertQueryObj;
+            const { insertQuery: addressInsertQuery, valsArr: addressInsertVals } = createInsertQuery("addresses", addressCols);
 
             const addressInsertResult = await client.query(
                 addressInsertQuery,
