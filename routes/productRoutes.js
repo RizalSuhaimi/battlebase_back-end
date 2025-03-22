@@ -8,25 +8,22 @@ productRouter.get("/", (req, res, next) => {
     const getProductsQuery = `
          SELECT 
             products.id,
-            products.name,
+            products.name AS product_name,
             products.stock,
             products.price,
-            users.name,
+            users.name AS seller_name,
+            categories.name AS category,
             product_reviews.rating,
-            product_reviews.review,
-            categories.name,
-			product_image_links.link
+            product_reviews.review
         FROM products
         JOIN users
             ON products.seller_id = users.id
-        JOIN product_reviews
-            ON products.id = product_reviews.product_id
-		JOIN products_categories
+        JOIN products_categories
             ON products.id = products_categories.product_id
-		JOIN categories
-            ON products_categories.categoryid = categories.id
-        JOIN product_image_links
-            ON products.id = product_image_links.product_id;
+	 	JOIN categories
+            ON products_categories.category_id = categories.id
+        LEFT JOIN product_reviews
+            ON products.id = product_reviews.product_id;
     `
 
     try {
@@ -47,10 +44,11 @@ productRouter.post("/", isAuthenticated, async (req, res, next) => {
         name,
         stock,
         price,
-        seller_id,
 		categories,
         images
     } = req.body
+
+    const seller_id = req.user.id
 
 	let client;
 
@@ -74,11 +72,6 @@ productRouter.post("/", isAuthenticated, async (req, res, next) => {
 		if (!is_seller) {
 			throw new Error("User is not registered as a seller")
 		}
-
-        // products
-        // product categories
-        // categories
-        // product_image_links
 
         // Insert row into products table, get id
         const productCols = {
@@ -178,6 +171,78 @@ productRouter.post("/", isAuthenticated, async (req, res, next) => {
 	} finally {
 		client.release();
 	}
+})
+
+// DRY validate productId
+productRouter.param("productId", async (req, res, next, id) => {
+    const productInfoQuery = `
+         SELECT 
+            products.id,
+            products.name AS product_name,
+            products.stock,
+            products.price,
+            users.name AS seller_name,
+            categories.name AS category,
+            product_reviews.rating,
+            product_reviews.review
+        FROM products
+        JOIN users
+            ON products.seller_id = users.id
+        JOIN products_categories
+            ON products.id = products_categories.product_id
+	 	JOIN categories
+            ON products_categories.category_id = categories.id
+        LEFT JOIN product_reviews
+            ON products.id = product_reviews.product_id
+        WHERE products.id = $1;
+    `
+
+    try {
+        const results = await pool.query(productInfoQuery, [id]);
+
+        if (results.rows.loength === 0) {
+            return res.status(404).json({ errorMessage: "Product not found"})
+        }
+
+        const product = results.rows[0];
+
+        if (product) {
+            req.product = product;
+            next()
+        }
+
+    } catch(err) {
+        res.status(500).json({ errorMessage: `Error fetching product: ${err.message}` });
+    }
+})
+
+productRouter.get("/:productId", isAuthenticated, async (req, res, next) => {
+    res.status(200).send(req.product);
+})
+
+productRouter.post("/:productId", isAuthenticated, async (req, res, next) => {
+    
+    const {
+        rating,
+        review,
+        productId
+    } = req.body
+
+    const user_id = req.user.id
+
+	let client;
+
+	try {
+		client = await pool.connect();
+        await client.query('BEGIN');
+
+        res.status(200).send(req.product);
+        
+    } catch(err) {
+
+    } finally {
+
+    }
 })
 
 module.exports = productRouter;
