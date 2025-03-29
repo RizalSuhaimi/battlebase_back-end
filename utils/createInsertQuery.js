@@ -1,3 +1,4 @@
+// This function only works for single row insertions
 const createInsertQuery = (table, colsObj) => {
     const colsArr = Object.keys(colsObj);
     const valsArr = Object.values(colsObj);

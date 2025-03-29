@@ -12,9 +12,8 @@ productRouter.get("/", (req, res, next) => {
             products.stock,
             products.price,
             users.name AS seller_name,
-            categories.name AS category,
-            product_reviews.rating,
-            product_reviews.review
+            ARRAY_AGG(categories.name) AS categories,
+            AVG(products_reviews.rating) AS average_rating
         FROM products
         JOIN users
             ON products.seller_id = users.id
@@ -22,8 +21,9 @@ productRouter.get("/", (req, res, next) => {
             ON products.id = products_categories.product_id
 	 	JOIN categories
             ON products_categories.category_id = categories.id
-        LEFT JOIN product_reviews
-            ON products.id = product_reviews.product_id;
+        LEFT JOIN products_reviews
+            ON products.id = products_reviews.product_id
+        GROUP BY products.id, users.name;
     `
 
     try {
@@ -182,9 +182,8 @@ productRouter.param("productId", async (req, res, next, id) => {
             products.stock,
             products.price,
             users.name AS seller_name,
-            categories.name AS category,
-            product_reviews.rating,
-            product_reviews.review
+            ARRAY_AGG(DISTINCT categories.name) AS categories,
+            AVG(products_reviews.rating) AS average_rating
         FROM products
         JOIN users
             ON products.seller_id = users.id
@@ -192,9 +191,10 @@ productRouter.param("productId", async (req, res, next, id) => {
             ON products.id = products_categories.product_id
 	 	JOIN categories
             ON products_categories.category_id = categories.id
-        LEFT JOIN product_reviews
-            ON products.id = product_reviews.product_id
-        WHERE products.id = $1;
+        LEFT JOIN products_reviews
+            ON products.id = products_reviews.product_id
+        WHERE products.id = $1
+        GROUP BY products.id, users.name;
     `
 
     try {
@@ -224,25 +224,74 @@ productRouter.post("/:productId", isAuthenticated, async (req, res, next) => {
     
     const {
         rating,
-        review,
-        productId
+        review
     } = req.body
 
-    const user_id = req.user.id
+    const reviewer_id = req.user.id
+    const product_id = req.product.id
 
-	let client;
-
-	try {
-		client = await pool.connect();
-        await client.query('BEGIN');
-
-        res.status(200).send(req.product);
+    try {
+        const products_reviewsInsertQuery = `
+            INSERT INTO products_reviews(reviewer_id, rating, review, product_id)
+            VALUES ($1, $2, $3, $4)
+        `
         
+        const products_reviewsInsertResult = await pool.query(
+            products_reviewsInsertQuery,
+            [
+                reviewer_id,
+                rating,
+                review,
+                product_id
+            ]
+        )
+
+        res.status(201).json({ 
+            message: "Review posted successfully"
+        });
+
     } catch(err) {
-
-    } finally {
-
+        res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while posting review"}`});
     }
+
+	// try {
+	// 	client = await pool.connect();
+    //     await client.query('BEGIN');
+
+    //     const productReviewsColsVals = {
+    //         rating,
+    //         review,
+    //         product_id
+    //     }
+
+    //     const { insertQuery: product_reviewsInsertQuery, valsArr: product_reviewsInsertVals } = createInsertQuery("product_reviews", productReviewsColsVals);
+
+    //     const product_reviewsInsertResult = await client.query(
+    //         product_reviewsInsertQuery,
+    //         product_reviewsInsertVals
+    //     )
+
+    //     const review_id = product_reviewsInsertResult.rows[0].id;
+
+    //     await client.query('COMMIT')
+
+    //     res.status(201).json({ 
+    //         message: "Review posted successfully",
+    //         review_id
+    //     });
+        
+    // } catch(err) {
+    //     await client.query('ROLLBACK');
+    //     console.error(err);
+    //     res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while posting the review"}`});
+
+    // } finally {
+    //     client.release();
+    // }
+})
+
+productRouter.put("/:productId", isAuthenticated, async (req, res, next) => {
+
 })
 
 module.exports = productRouter;
