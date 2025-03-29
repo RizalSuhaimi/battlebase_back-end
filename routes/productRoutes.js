@@ -253,41 +253,6 @@ productRouter.post("/:productId", isAuthenticated, async (req, res, next) => {
     } catch(err) {
         res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while posting review"}`});
     }
-
-	// try {
-	// 	client = await pool.connect();
-    //     await client.query('BEGIN');
-
-    //     const productReviewsColsVals = {
-    //         rating,
-    //         review,
-    //         product_id
-    //     }
-
-    //     const { insertQuery: product_reviewsInsertQuery, valsArr: product_reviewsInsertVals } = createInsertQuery("product_reviews", productReviewsColsVals);
-
-    //     const product_reviewsInsertResult = await client.query(
-    //         product_reviewsInsertQuery,
-    //         product_reviewsInsertVals
-    //     )
-
-    //     const review_id = product_reviewsInsertResult.rows[0].id;
-
-    //     await client.query('COMMIT')
-
-    //     res.status(201).json({ 
-    //         message: "Review posted successfully",
-    //         review_id
-    //     });
-        
-    // } catch(err) {
-    //     await client.query('ROLLBACK');
-    //     console.error(err);
-    //     res.status(500).json({ errorMessage: `${err.message ? err.message : "An error occurred while posting the review"}`});
-
-    // } finally {
-    //     client.release();
-    // }
 })
 
 productRouter.put("/:productId", isAuthenticated, async (req, res, next) => {
