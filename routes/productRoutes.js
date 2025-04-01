@@ -128,6 +128,8 @@ productRouter.post("/", isAuthenticated, async (req, res, next) => {
                 ${categoryIdParamsStr}
         `
         const insertProductCategoryVals = [productId, ...categoryIds]
+        console.log(insertProductCategoryQuery)
+        console.log(insertProductCategoryVals)
         const insertProductCategoryResults = await client.query(
             insertProductCategoryQuery,
             insertProductCategoryVals
