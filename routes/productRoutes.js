@@ -128,8 +128,7 @@ productRouter.post("/", isAuthenticated, async (req, res, next) => {
                 ${categoryIdParamsStr}
         `
         const insertProductCategoryVals = [productId, ...categoryIds]
-        console.log(insertProductCategoryQuery)
-        console.log(insertProductCategoryVals)
+        
         const insertProductCategoryResults = await client.query(
             insertProductCategoryQuery,
             insertProductCategoryVals
@@ -183,6 +182,7 @@ productRouter.param("productId", async (req, res, next, id) => {
             products.name AS product_name,
             products.stock,
             products.price,
+            products.seller_id,
             users.name AS seller_name,
             ARRAY_AGG(DISTINCT categories.name) AS categories,
             AVG(products_reviews.rating) AS average_rating
@@ -233,6 +233,11 @@ productRouter.post("/:productId", isAuthenticated, async (req, res, next) => {
     const product_id = req.product.id
 
     try {
+        // need to check that the seller is not giving a review to themself
+        if (reviewer_id === req.product.seller_id) {
+            throw new Error("Seller cannot review their own product")
+        }
+
         const products_reviewsInsertQuery = `
             INSERT INTO products_reviews(reviewer_id, rating, review, product_id)
             VALUES ($1, $2, $3, $4)

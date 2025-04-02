@@ -9,8 +9,12 @@ const pool = require("./config/db");
 const PgSession = require('connect-pg-simple')(session);
 const bcrypt = require("bcrypt");
 const isAuthenticated = require("./utils/middlewareAuthe");
+const { populateProducts } = require('./utils/tablePopulater');
 
 require('dotenv').config();
+
+// functions to populate postgresql tables
+populateProducts();
 
 const PORT = process.env.PORT || 4001;
 

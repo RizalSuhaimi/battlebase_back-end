@@ -34,7 +34,7 @@ usersRouter.post("/", async (req, res, next) => {
         email,
         password,
         phone,
-        seller=false,
+        is_seller=false,
         address_id=null
     } = req.body
 
@@ -54,7 +54,7 @@ usersRouter.post("/", async (req, res, next) => {
             email,
             password: hash,
             phone,
-            seller,
+            is_seller,
             address_id
         };
         const { insertQuery: userInsertQuery, valsArr: userInsertVals } = createInsertQuery("users", usersCols);
