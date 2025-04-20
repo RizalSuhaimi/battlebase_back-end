@@ -1,21 +1,21 @@
-const express = require('express');
+const express = require("express");
 const app = express();
 const session = require("express-session");
-const bodyParser = require('body-parser');
-const cors = require('cors');
+const bodyParser = require("body-parser");
+const cors = require("cors");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const pool = require("./config/db");
-const PgSession = require('connect-pg-simple')(session);
+const PgSession = require("connect-pg-simple")(session);
 const bcrypt = require("bcrypt");
 const isAuthenticated = require("./utils/middlewareAuthe");
-const { populateProducts, populateProductDescriptions  } = require('./utils/tablePopulater');
+const { populateProducts, populateProductDescriptions  } = require("./utils/tablePopulater");
 
 require('dotenv').config();
 
 // functions to populate postgresql tables
 // populateProducts();
-populateProductDescriptions();
+// populateProductDescriptions();
 
 const PORT = process.env.PORT || 4001;
 

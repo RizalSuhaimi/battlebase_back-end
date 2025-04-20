@@ -1,15 +1,56 @@
-const express = require('express');
+const express = require("express");
 const pool = require("../config/db");
-const { faker } = require('@faker-js/faker');
+const { faker } = require("@faker-js/faker");
 
 // the functions in this file are mainly useful for tables with multiple columns
+const populateProductsReviews = async () => {
+    // get all product ids from products table
+    // get all user ids from users table
+    // loop through all product ids
+    // in each run of the loop
+    //  give one product 5 random reviews from 5 random users
+
+	let client
+
+	try {
+		client = await pool.connect();
+		await client.query("BEGIN");
+
+		const selectProductIdsQuery = `
+			SELECT id
+			FROM products
+		`
+		const selectProductIdsResults = await client.query(selectAllIdsQueryStr)
+
+		const selectUserIdsQuery = `
+			SELECT id
+			FROM users
+		`
+		const selectUserIdsResults = await client.query(selectUserIdsQuery)
+
+		let products_reviewsInsertQuery
+
+		for (const productId of selectProductIdsResults) {
+			for (let i = 0; i < 5; i++) {
+				
+			}
+		}
+
+
+	} catch(err) {
+		await client.query('ROLLBACK');
+        console.error(err.message ? err.message : "An error occurred while populating reviews for products");
+	} finally {
+		client.release();
+	}
+}
 
 const populateProductDescriptions = async () => {
     let client
 
     try {
         client = await pool.connect();
-        await client.query('BEGIN');
+        await client.query("BEGIN");
 
         const selectAllIdsQueryStr = `
             SELECT id
