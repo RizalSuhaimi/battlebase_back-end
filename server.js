@@ -1,7 +1,6 @@
 const express = require("express");
 const app = express();
 const session = require("express-session");
-const bodyParser = require("body-parser");
 const cors = require("cors");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
@@ -33,7 +32,7 @@ app.use(cors({
     credentials: true // This is required to send cookies in cross-origin requests
 }));
 
-app.use(bodyParser.json());
+app.use(express.json());
 
 app.use(
     session({
@@ -48,6 +47,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Consider moving this to autheRoute.js because the block below determines how authentication is done
 passport.use(
     new LocalStrategy(
         { usernameField: "email" }, // Explicitly define that email is the username field
